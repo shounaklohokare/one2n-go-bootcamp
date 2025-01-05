@@ -3,7 +3,7 @@ package main
 import "fmt"
 
 func main() {
-	var i interface{}
+	var i interface{} // An interface type that specifies zero methods is known as the empty interface:
 	describe(i)
 
 	i = 42

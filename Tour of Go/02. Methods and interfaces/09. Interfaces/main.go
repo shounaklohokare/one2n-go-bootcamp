@@ -37,6 +37,7 @@ type Vertex struct {
 	X, Y float64
 }
 
+// Here receiver is a pointer. hence, only a pointer to Vertex implements the Abser interface
 func (v *Vertex) Abs() float64 {
 	return math.Sqrt(v.X*v.X + v.Y*v.Y)
 }

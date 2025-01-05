@@ -2,6 +2,7 @@ package main
 
 import "fmt"
 
+// A type switch enables several type assertions in series.
 func do(i interface{}) {
 	switch v := i.(type) {
 	case int:
