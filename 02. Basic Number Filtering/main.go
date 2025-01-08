@@ -1,3 +1,4 @@
+// run go test -v to get test results
 package main
 
 import (
@@ -62,9 +63,52 @@ func getOddPrimeNumbers(nums []int) []int {
 
 	var out []int
 	for _, n := range nums {
-		if n%2 == 0 && isPrime(n) {
+		if n%2 != 0 && isPrime(n) {
 			out = append(out, n)
 		}
+	}
+
+	return out
+
+}
+
+type CustomCondition func(num int) bool
+
+func getAllConditions(nums []int, customConditions ...CustomCondition) []int {
+
+	var out []int
+	for _, num := range nums {
+
+		conditionFulfill := true
+		for _, customCondition := range customConditions {
+			if !customCondition(num) { // if any one condition is not getting fulfilled then we don't want that num
+				conditionFulfill = false
+				break
+			}
+		}
+
+		if conditionFulfill {
+			out = append(out, num)
+		}
+
+	}
+
+	return out
+
+}
+
+func getAnyCondition(nums []int, customConditions ...CustomCondition) []int {
+
+	var out []int
+	for _, num := range nums {
+
+		for _, customCondition := range customConditions {
+			if customCondition(num) {
+				out = append(out, num) // if any one condition is getting fulfilled then we accept that number
+				break
+			}
+		}
+
 	}
 
 	return out
