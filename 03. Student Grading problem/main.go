@@ -98,9 +98,31 @@ func getGrade(score float32) Grade {
 }
 
 func findOverallTopper(gradedStudents []studentStat) studentStat {
-	return studentStat{}
+	topScore := float32(0)
+	var topper studentStat
+	for _, student := range gradedStudents {
+		if student.finalScore > topScore {
+			topScore = student.finalScore
+			topper = student
+		}
+	}
+	return topper
 }
 
 func findTopperPerUniversity(gs []studentStat) map[string]studentStat {
-	return nil
+	universityToppers := make(map[string]studentStat)
+	studentsUniMap := mapStudentsToUniversity(gs)
+	for uni, students := range studentsUniMap {
+		t := findOverallTopper(students)
+		universityToppers[uni] = t
+	}
+	return universityToppers
+}
+
+func mapStudentsToUniversity(gs []studentStat) map[string][]studentStat {
+	studentsUniversityMap := make(map[string][]studentStat)
+	for _, student := range gs {
+		studentsUniversityMap[student.university] = append(studentsUniversityMap[student.university], student)
+	}
+	return studentsUniversityMap
 }
