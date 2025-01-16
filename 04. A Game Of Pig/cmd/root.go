@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/shounaklohokare/one2n/game_of_pig/game"
 	"github.com/spf13/cobra"
@@ -25,6 +26,17 @@ var RootCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
+		if strings.Contains(args[1], "-") {
+			rangeStart, rangeEnd, err := getRange(args[1])
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+
+			executeStory2(p1, rangeStart, rangeEnd)
+			return
+		}
+
 		p2, err := validateTarget(args[1])
 		if err != nil {
 			fmt.Println(err)
@@ -34,6 +46,26 @@ var RootCmd = &cobra.Command{
 		executeStory1(p1, p2)
 
 	},
+}
+
+func getRange(rangeInput string) (int, int, error) {
+
+	parts := strings.Split(rangeInput, "-")
+
+	x, err := validateTarget(parts[0])
+	if err != nil {
+		fmt.Println(err)
+		return -1, -1, err
+	}
+
+	y, err := validateTarget(parts[1])
+	if err != nil {
+		fmt.Println(err)
+		return -1, -1, err
+	}
+
+	return x, y, nil
+
 }
 
 func executeStory1(p1Target, p2Target int) {
@@ -52,7 +84,7 @@ func executeStory1(p1Target, p2Target int) {
 		p := &p1
 		for {
 
-			if p.ExecuteTurn(dice, 200) {
+			if p.ExecuteTurn(dice, 100) {
 				break
 			}
 
@@ -69,7 +101,7 @@ func executeStory1(p1Target, p2Target int) {
 
 	percent := 100 * float32(wins["p1"]) / 10.0
 
-	fmt.Printf("Holding at %d vs Holding at %d : wins : %d/10 (%0.1f%%), losses: %d/10 (%0.1f%%)", p1Target, p2Target, wins["p1"], percent, 10-wins["p1"], 100-percent)
+	fmt.Printf("Holding at %d vs Holding at %d : wins : %d/10 (%0.1f%%), losses: %d/10 (%0.1f%%)\n", p1Target, p2Target, wins["p1"], percent, 10-wins["p1"], 100-percent)
 
 }
 
@@ -85,5 +117,19 @@ func validateTarget(target string) (int, error) {
 	}
 
 	return out, nil
+
+}
+
+func executeStory2(p1Target, rangeStart, rangeEnd int) {
+
+	for p2Target := rangeStart; p2Target <= rangeEnd; p2Target++ {
+
+		if p2Target == p1Target {
+			continue
+		}
+
+		executeStory1(p1Target, p2Target)
+
+	}
 
 }
