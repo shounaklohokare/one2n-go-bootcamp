@@ -20,6 +20,24 @@ var RootCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
+		if strings.Contains(args[0], "-") && strings.Contains(args[1], "-") {
+			rangeStartP1, rangeEndP1, err := getRange(args[0])
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+
+			rangeStartP2, rangeEndP2, err := getRange(args[1])
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+
+			executeStory3(rangeStartP1, rangeEndP1, rangeStartP2, rangeEndP2)
+			return
+
+		}
+
 		p1, err := validateTarget(args[0])
 		if err != nil {
 			fmt.Println(err)
@@ -43,9 +61,19 @@ var RootCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		executeStory1(p1, p2)
+		winsp1, winsp2 := executeStory1(p1, p2)
+
+		displayResult(p1, p2, winsp1, winsp2)
 
 	},
+}
+
+func displayResult(p1Target, p2Target, winsp1, winsp2 int) {
+
+	winPercent := 100 * float32(winsp1) / 10.0
+
+	fmt.Printf("Holding at %d vs Holding at %d : wins : %d/10 (%0.1f%%), losses: %d/10 (%0.1f%%)\n", p1Target, p2Target, winsp1, winPercent, winsp2, 100-winPercent)
+
 }
 
 func getRange(rangeInput string) (int, int, error) {
@@ -68,7 +96,7 @@ func getRange(rangeInput string) (int, int, error) {
 
 }
 
-func executeStory1(p1Target, p2Target int) {
+func executeStory1(p1Target, p2Target int) (int, int) {
 
 	p1 := game.Player{PlayerNumber: "p1", HoldTarget: p1Target}
 	p2 := game.Player{PlayerNumber: "p2", HoldTarget: p2Target}
@@ -99,9 +127,7 @@ func executeStory1(p1Target, p2Target int) {
 
 	}
 
-	percent := 100 * float32(wins["p1"]) / 10.0
-
-	fmt.Printf("Holding at %d vs Holding at %d : wins : %d/10 (%0.1f%%), losses: %d/10 (%0.1f%%)\n", p1Target, p2Target, wins["p1"], percent, 10-wins["p1"], 100-percent)
+	return wins["p1"], wins["p2"]
 
 }
 
@@ -128,8 +154,42 @@ func executeStory2(p1Target, rangeStart, rangeEnd int) {
 			continue
 		}
 
-		executeStory1(p1Target, p2Target)
+		winsp1, winsp2 := executeStory1(p1Target, p2Target)
+
+		displayResult(p1Target, p2Target, winsp1, winsp2)
 
 	}
 
+}
+
+func executeStory3(rangeStartP1, rangeEndP1, rangeStartP2, rangeEndP2 int) {
+
+	for p1Target := rangeStartP1; p1Target <= rangeEndP1; p1Target++ {
+
+		totalWinsP1 := 0
+		totalWinsP2 := 0
+
+		for p2Target := rangeStartP2; p2Target <= rangeEndP2; p2Target++ {
+
+			if p1Target == p2Target {
+				continue
+			}
+
+			winsp1, winsp2 := executeStory1(p1Target, p2Target)
+
+			totalWinsP1 += winsp1
+			totalWinsP2 += winsp2
+
+		}
+
+		displayResultStory3(p1Target, totalWinsP1, totalWinsP2)
+
+	}
+
+}
+
+func displayResultStory3(p1Target, totalWinsP1, totalWinsP2 int) {
+	winPercent := 100 * float64(totalWinsP1) / 990.0
+
+	fmt.Printf("Result: Wins, losses staying at k = %d: wins : %d/990 (%0.1f%%), losses: %d/990 (%0.1f%%)\n", p1Target, totalWinsP1, winPercent, totalWinsP2, 100-winPercent)
 }
