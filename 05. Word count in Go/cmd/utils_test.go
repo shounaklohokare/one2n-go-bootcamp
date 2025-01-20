@@ -1,61 +1,33 @@
 package cmd
 
 import (
+	"reflect"
 	"testing"
 )
 
-func TestGetLineCount(t *testing.T) {
+func TestGetTextFileCounts(t *testing.T) {
 
 	tests := []struct {
-		fileName          string
-		expectedLineCount int
-		wantErr           bool
+		fileName       string
+		expectedCounts TextFileCounts
+		wantErr        bool
 	}{
-		{"test_1.txt", 6, false},
-		{"test_2.txt", 12, false},
-		{"bar", -1, true},
-		{"not_exists.txt", -1, true},
+		{"test_1.txt", TextFileCounts{lineCount: 6, wordCount: 98, characterCount: 642}, false},
+		{"test_2.txt", TextFileCounts{lineCount: 12, wordCount: 151, characterCount: 1007}, false},
+		{"bar", TextFileCounts{lineCount: 0, wordCount: 0, characterCount: 0}, true},
+		{"not_exists.txt", TextFileCounts{lineCount: 0, wordCount: 0, characterCount: 0}, true},
 	}
 
 	for _, test := range tests {
 
-		gotLineCount, err := getLineCount(test.fileName)
+		receivedCounts, err := getTextFileCounts(test.fileName)
 
 		if (err != nil) != test.wantErr {
-			t.Errorf("getLineCount() error = %v, wantErr %v", err, test.wantErr)
+			t.Errorf("getTextFileCounts() error = %v, wantErr %v", err, test.wantErr)
 			return
 		}
-		if gotLineCount != test.expectedLineCount {
-			t.Errorf("getLineCount() = %v, want %v", gotLineCount, test.expectedLineCount)
-		}
-
-	}
-
-}
-
-func TestGetWordCount(t *testing.T) {
-
-	tests := []struct {
-		fileName          string
-		expectedWordCount int
-		wantErr           bool
-	}{
-		{"test_1.txt", 98, false},
-		{"test_2.txt", 151, false},
-		{"bar", -1, true},
-		{"not_exists.txt", -1, true},
-	}
-
-	for _, test := range tests {
-
-		gotWordCount, err := getWordCount(test.fileName)
-
-		if (err != nil) != test.wantErr {
-			t.Errorf("getWordCount() error = %v, wantErr %v", err, test.wantErr)
-			return
-		}
-		if gotWordCount != test.expectedWordCount {
-			t.Errorf("getWordCount() = %v, want %v", gotWordCount, test.expectedWordCount)
+		if !reflect.DeepEqual(receivedCounts, test.expectedCounts) {
+			t.Errorf("getTextFileCounts() = %v, want %v", receivedCounts, test.expectedCounts)
 		}
 
 	}

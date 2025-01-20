@@ -6,62 +6,40 @@ import (
 	"os"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/spf13/pflag"
 )
 
-func getLineCount(fileName string) (int, error) {
-
-	scanner, file, err := getScanner(fileName)
-	if err != nil {
-		return -1, err
-	}
-
-	defer file.Close()
-
-	lineCount := 0
-	for scanner.Scan() {
-		lineCount += 1
-	}
-
-	return lineCount, nil
+type TextFileCounts struct {
+	lineCount      int
+	wordCount      int
+	characterCount int
 }
 
-func getWordCount(fileName string) (int, error) {
+func getTextFileCounts(fileName string) (TextFileCounts, error) {
+
+	textFileCounts := TextFileCounts{
+		lineCount:      0,
+		wordCount:      0,
+		characterCount: 0,
+	}
 
 	scanner, file, err := getScanner(fileName)
 	if err != nil {
-		return -1, err
+		return textFileCounts, err
 	}
 
 	defer file.Close()
 
-	wordCount := 0
 	for scanner.Scan() {
+		textFileCounts.lineCount += 1
+
 		line := scanner.Text()
-		wordCount += len(strings.Fields(line))
+		textFileCounts.wordCount += len(strings.Fields(line))
+		textFileCounts.characterCount += utf8.RuneCountInString(line)
 	}
 
-	return wordCount, nil
-
-}
-
-func getCharacterCount(fileName string) (int, error) {
-
-	scanner, file, err := getScanner(fileName)
-	if err != nil {
-		return -1, err
-	}
-
-	defer file.Close()
-
-	characterCount := 0
-	for scanner.Scan() {
-		line := scanner.Text()
-
-		characterCount += utf8.RuneCountInString(line)
-	}
-
-	return characterCount, nil
-
+	return textFileCounts, nil
 }
 
 func getScanner(fileName string) (*bufio.Scanner, *os.File, error) {
@@ -85,5 +63,46 @@ func getScanner(fileName string) (*bufio.Scanner, *os.File, error) {
 	}
 
 	return bufio.NewScanner(file), file, nil
+
+}
+
+func printOutput(textFileCounts TextFileCounts, fileName string, fs *pflag.FlagSet) {
+
+	output := ""
+
+	l := isFlagSet(fs, "linecount")
+	if l {
+		output += fmt.Sprintf("\t%v", textFileCounts.lineCount)
+	}
+
+	w := isFlagSet(fs, "wordcount")
+	if w {
+		output += fmt.Sprintf("\t%v", textFileCounts.wordCount)
+	}
+
+	c := isFlagSet(fs, "charactercount")
+	if c {
+		output += fmt.Sprintf("\t%v", textFileCounts.characterCount)
+	}
+
+	if !c && !w && !l {
+		output += fmt.Sprintf("\t%v\t%v\t%v", textFileCounts.lineCount, textFileCounts.wordCount, textFileCounts.characterCount)
+	}
+
+	output += fmt.Sprintf("\t%v", fileName)
+
+	fmt.Fprint(os.Stdout, output)
+
+}
+
+func isFlagSet(fs *pflag.FlagSet, key string) bool {
+
+	isSet, err := fs.GetBool(key)
+	if err != nil {
+		fmt.Fprint(os.Stdout, err)
+		os.Exit(1)
+	}
+
+	return isSet
 
 }
