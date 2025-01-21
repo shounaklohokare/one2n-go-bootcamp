@@ -5,9 +5,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"unicode/utf8"
-
-	"github.com/spf13/pflag"
 )
 
 type TextFileCounts struct {
@@ -29,20 +26,27 @@ func getTextFileCounts(fileName string) (TextFileCounts, error) {
 		return textFileCounts, err
 	}
 
-	defer file.Close()
+	if len(fileName) != 0 {
+		defer file.Close()
+	}
 
 	for scanner.Scan() {
-		textFileCounts.lineCount += 1
-
 		line := scanner.Text()
+
+		textFileCounts.lineCount += 1
 		textFileCounts.wordCount += len(strings.Fields(line))
-		textFileCounts.characterCount += utf8.RuneCountInString(line)
+		textFileCounts.characterCount += len(line) + 1
 	}
 
 	return textFileCounts, nil
 }
 
 func getScanner(fileName string) (*bufio.Scanner, *os.File, error) {
+
+	if len(fileName) == 0 {
+		return bufio.NewScanner(os.Stdin), nil, nil
+	}
+
 	file, err := os.Open(fileName)
 	if os.IsNotExist(err) {
 		return nil, file, fmt.Errorf("./wc: %v: open: No such file or directory", fileName)
@@ -66,21 +70,21 @@ func getScanner(fileName string) (*bufio.Scanner, *os.File, error) {
 
 }
 
-func printOutput(textFileCounts TextFileCounts, fileName string, fs *pflag.FlagSet) {
+func printOutput(textFileCounts TextFileCounts, fileName string, wcFlags WcFlags) {
 
 	output := ""
 
-	l := isFlagSet(fs, "linecount")
+	l := wcFlags.lineFlag
 	if l {
 		output += fmt.Sprintf("\t%v", textFileCounts.lineCount)
 	}
 
-	w := isFlagSet(fs, "wordcount")
+	w := wcFlags.wordFlag
 	if w {
 		output += fmt.Sprintf("\t%v", textFileCounts.wordCount)
 	}
 
-	c := isFlagSet(fs, "charactercount")
+	c := wcFlags.characterFlag
 	if c {
 		output += fmt.Sprintf("\t%v", textFileCounts.characterCount)
 	}
@@ -92,17 +96,5 @@ func printOutput(textFileCounts TextFileCounts, fileName string, fs *pflag.FlagS
 	output += fmt.Sprintf("\t%v", fileName)
 
 	fmt.Fprint(os.Stdout, output)
-
-}
-
-func isFlagSet(fs *pflag.FlagSet, key string) bool {
-
-	isSet, err := fs.GetBool(key)
-	if err != nil {
-		fmt.Fprint(os.Stdout, err)
-		os.Exit(1)
-	}
-
-	return isSet
 
 }

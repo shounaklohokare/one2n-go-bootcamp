@@ -12,8 +12,8 @@ func TestGetTextFileCounts(t *testing.T) {
 		expectedCounts TextFileCounts
 		wantErr        bool
 	}{
-		{"test_1.txt", TextFileCounts{lineCount: 6, wordCount: 98, characterCount: 642}, false},
-		{"test_2.txt", TextFileCounts{lineCount: 12, wordCount: 151, characterCount: 1007}, false},
+		{"test_1.txt", TextFileCounts{lineCount: 6, wordCount: 98, characterCount: 652}, false},
+		{"test_2.txt", TextFileCounts{lineCount: 12, wordCount: 151, characterCount: 1027}, false},
 		{"bar", TextFileCounts{lineCount: 0, wordCount: 0, characterCount: 0}, true},
 		{"not_exists.txt", TextFileCounts{lineCount: 0, wordCount: 0, characterCount: 0}, true},
 	}
