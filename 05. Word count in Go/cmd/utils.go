@@ -13,6 +13,8 @@ type TextFileCounts struct {
 	characterCount int
 }
 
+const size = 1024 * 1024
+
 func getTextFileCounts(fileName string) (TextFileCounts, error) {
 
 	textFileCounts := TextFileCounts{
@@ -43,8 +45,13 @@ func getTextFileCounts(fileName string) (TextFileCounts, error) {
 
 func getScanner(fileName string) (*bufio.Scanner, *os.File, error) {
 
+	var scanner *bufio.Scanner
+
 	if len(fileName) == 0 {
-		return bufio.NewScanner(os.Stdin), nil, nil
+		scanner = bufio.NewScanner(os.Stdin)
+		scanner.Buffer(make([]byte, size), size)
+
+		return scanner, nil, nil
 	}
 
 	file, err := os.Open(fileName)
@@ -66,7 +73,10 @@ func getScanner(fileName string) (*bufio.Scanner, *os.File, error) {
 		return nil, file, fmt.Errorf("./wc: %v: Is a directory", fileName)
 	}
 
-	return bufio.NewScanner(file), file, nil
+	scanner = bufio.NewScanner(file)
+	scanner.Buffer(make([]byte, size), size)
+
+	return scanner, file, nil
 
 }
 
