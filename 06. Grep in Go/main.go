@@ -1,33 +1,80 @@
 package main
 
 import (
-	"bufio"
+	"fmt"
 	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
 )
 
-var size int32 = 1024 * 1024
+var size int = 1024 * 1024
+
+func main() {
+
+	if err := RootCmd.Execute(); err != nil {
+		fmt.Fprint(os.Stdout, err)
+	}
+
+}
 
 var RootCmd = cobra.Command{
 	Use:   "grep",
 	Short: "A commnad line program that implements Unix grep like functionality",
 	Run: func(cmd *cobra.Command, args []string) {
 
+		if len(args) == 2 {
+
+			out, err := getStringOccurencesInAFile(args[0], args[1])
+			if err != nil {
+				fmt.Fprint(os.Stdout, err)
+				os.Exit(1)
+			}
+
+			for _, line := range out {
+				fmt.Fprint(os.Stdout, line+"\n")
+			}
+
+		}
+
 	},
 }
 
 func getStringOccurencesInAFile(searchString, fileName string) ([]string, error) {
 
-	file, err := os.Open(fileName)
+	scanner, file, err := getScanner(fileName)
 	if err != nil {
 		return nil, err
 	}
 
-	scanner := bufio.NewScanner(file)
+	defer file.Close()
 
-	out := make([]string, 10)
+	var out []string
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		if strings.Contains(line, searchString) {
+			out = append(out, line)
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	return out, nil
+
+}
+
+func getStringOccurencesFromStdin(searchString string) ([]string, error) {
+
+	scanner, _, err := getScanner("")
+	if err != nil {
+		fmt.Fprint(os.Stdout, err)
+		os.Exit(1)
+	}
+
+	var out []string
 	for scanner.Scan() {
 		line := scanner.Text()
 
