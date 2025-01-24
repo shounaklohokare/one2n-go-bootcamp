@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"io"
 	"os"
-	"strings"
+	"regexp"
 
 	"github.com/spf13/cobra"
 )
@@ -23,38 +25,37 @@ var RootCmd = cobra.Command{
 	Short: "A commnad line program that implements Unix grep like functionality",
 	Run: func(cmd *cobra.Command, args []string) {
 
-		if len(args) == 2 {
+		// if len(args) == 2 {
 
-			out, err := getStringOccurencesInAFile(args[0], args[1])
-			if err != nil {
-				fmt.Fprint(os.Stdout, err)
-				os.Exit(1)
-			}
+		// 	out, err := getStringOccurencesInAFile(args[0], args[1])
+		// 	if err != nil {
+		// 		fmt.Fprint(os.Stdout, err)
+		// 		os.Exit(1)
+		// 	}
 
-			for _, line := range out {
-				fmt.Fprint(os.Stdout, line+"\n")
-			}
+		// 	for _, line := range out {
+		// 		fmt.Fprint(os.Stdout, line+"\n")
+		// 	}
 
-		}
+		// }
 
 	},
 }
 
-func getStringOccurencesInAFile(searchString, fileName string) ([]string, error) {
+func grep(r io.Reader, searchString string) ([]string, error) {
 
-	scanner, file, err := getScanner(fileName)
+	scanner := bufio.NewScanner(r)
+	scanner.Buffer(make([]byte, size), size)
+
+	pattern, err := regexp.Compile(searchString)
 	if err != nil {
 		return nil, err
 	}
 
-	defer file.Close()
-
 	var out []string
 	for scanner.Scan() {
-		line := scanner.Text()
-
-		if strings.Contains(line, searchString) {
-			out = append(out, line)
+		if pattern.MatchString(scanner.Text()) {
+			out = append(out, scanner.Text())
 		}
 	}
 
@@ -63,26 +64,4 @@ func getStringOccurencesInAFile(searchString, fileName string) ([]string, error)
 	}
 
 	return out, nil
-
-}
-
-func getStringOccurencesFromStdin(searchString string) ([]string, error) {
-
-	scanner, _, err := getScanner("")
-	if err != nil {
-		fmt.Fprint(os.Stdout, err)
-		os.Exit(1)
-	}
-
-	var out []string
-	for scanner.Scan() {
-		line := scanner.Text()
-
-		if strings.Contains(line, searchString) {
-			out = append(out, line)
-		}
-	}
-
-	return out, nil
-
 }

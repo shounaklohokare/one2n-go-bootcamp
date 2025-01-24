@@ -1,12 +1,14 @@
 package main
 
 import (
+	"log"
+	"os"
 	"reflect"
 	"strings"
 	"testing"
 )
 
-func TestGetStringOccurencesInAFile(t *testing.T) {
+func TestGrepFile(t *testing.T) {
 
 	tests := []struct {
 		searchString   string
@@ -16,13 +18,17 @@ func TestGetStringOccurencesInAFile(t *testing.T) {
 	}{
 		{"DevOps", "test_1.txt", []string{"Artificial intelligence and machine learning are increasingly integrated into DevOps to automate tasks and enhance predictive analytics.",
 			"The adoption of DevSecOps emphasizes incorporating security measures throughout the DevOps pipeline."}, ""},
-		{"Docker", "not_exists.txt", nil, "No such file or directory"},
-		{"Docker", "bar", nil, "Is a directory"},
+		{"Docker", "not_exists.txt", nil, "invalid argument"},
+		{"Docker", "bar", nil, "Incorrect function."},
 	}
 
 	for _, test := range tests {
 
-		receivedOutput, err := getStringOccurencesInAFile(test.searchString, test.fileName)
+		file, _ := os.Open(test.fileName)
+
+		defer file.Close()
+
+		receivedOutput, err := grep(file, test.searchString)
 		if err != nil {
 
 			if !strings.Contains(err.Error(), test.expectedError) {
@@ -37,4 +43,29 @@ func TestGetStringOccurencesInAFile(t *testing.T) {
 
 	}
 
+}
+
+func TestGrepSTDIN(t *testing.T) {
+
+	file, err := os.Open("test_1.txt")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	oldStdin := os.Stdin
+
+	defer func() { os.Stdin = oldStdin }()
+
+	os.Stdin = file
+	var got []string
+	if got, err = grep(file, "DevOps"); err != nil {
+		t.Errorf("user input failed :- %v", err)
+	}
+
+	defer file.Close()
+	want := []string{"Artificial intelligence and machine learning are increasingly integrated into DevOps to automate tasks and enhance predictive analytics.",
+		"The adoption of DevSecOps emphasizes incorporating security measures throughout the DevOps pipeline."}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("Want %v Got %v", want, err)
+	}
 }
