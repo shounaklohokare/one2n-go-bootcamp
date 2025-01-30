@@ -69,3 +69,32 @@ func TestGrepSTDIN(t *testing.T) {
 		t.Errorf("Want %v Got %v", want, err)
 	}
 }
+
+func TestOutputFile(t *testing.T) {
+
+	tests := []struct {
+		searchString      string
+		fileName          string
+		outputFile        string
+		outputFileContent []string
+		expectedOutput    string
+	}{
+		{"DevOps", "test_1.txt", "out_2.txt", []string{"Artificial intelligence and machine learning are increasingly integrated into DevOps to automate tasks and enhance predictive analytics.",
+			"The adoption of DevSecOps emphasizes incorporating security measures throughout the DevOps pipeline."}, ""},
+		{"DevOps", "test_1.txt", "out.txt", []string{}, "file 'out.txt' already exists"},
+	}
+
+	for _, test := range tests {
+
+		file, _ := os.Open(test.fileName)
+
+		defer file.Close()
+
+		output := writeToFile(file, test.searchString, test.outputFile)
+		if output != nil && !strings.Contains(output.Error(), test.expectedOutput) {
+			t.Errorf("Want %v Got %v", test.expectedOutput, output)
+		}
+
+	}
+
+}

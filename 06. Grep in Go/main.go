@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"regexp"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -64,4 +65,38 @@ func grep(r io.Reader, searchString string) ([]string, error) {
 	}
 
 	return out, nil
+}
+
+func writeToFile(r io.Reader, searchString, outputFile string) error {
+
+	output, err := grep(r, searchString)
+	if err != nil {
+		return err
+	}
+
+	err = checkFileExists(outputFile)
+	if err != nil {
+		return err
+	}
+
+	content := strings.Join(output, "\n")
+	err = os.WriteFile(outputFile, []byte(content), 0666)
+	if err != nil {
+		fmt.Println("Error writing to file:", err)
+		return err
+	}
+
+	return nil
+
+}
+
+func checkFileExists(filename string) error {
+	_, err := os.Stat(filename)
+	if err == nil {
+		return fmt.Errorf("file '%s' already exists", filename)
+	}
+	if os.IsNotExist(err) {
+		return nil
+	}
+	return err
 }
