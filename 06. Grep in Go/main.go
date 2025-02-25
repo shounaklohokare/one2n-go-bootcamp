@@ -4,7 +4,9 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -19,6 +21,12 @@ func main() {
 		fmt.Fprint(os.Stdout, err)
 	}
 
+}
+
+type GrepResult struct {
+	FileName string
+	Result   []string
+	Error    error
 }
 
 var RootCmd = cobra.Command{
@@ -99,4 +107,63 @@ func checkFileExists(filename string) error {
 		return nil
 	}
 	return err
+}
+
+func grepInDir(dir, searchString string) ([]GrepResult, error) {
+
+	var grepResult []GrepResult
+
+	fileNames, err := listFiles(dir)
+	if err != nil {
+		return grepResult, err
+	}
+
+	for _, fileName := range fileNames {
+		file, err := os.Open(fileName)
+		if err != nil {
+			grepResult = append(grepResult, GrepResult{
+				FileName: fileName,
+				Error:    err,
+			})
+			continue
+		}
+
+		defer file.Close()
+
+		result, err := grep(file, searchString)
+		if err != nil {
+			grepResult = append(grepResult, GrepResult{
+				FileName: fileName,
+				Error:    err,
+			})
+			continue
+		}
+
+		grepResult = append(grepResult, GrepResult{
+			FileName: fileName,
+			Result:   result,
+		})
+
+	}
+
+	return grepResult, err
+
+}
+
+func listFiles(dir string) ([]string, error) {
+	var fileNames []string
+
+	err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if !d.IsDir() {
+			fileNames = append(fileNames, path)
+		}
+
+		return nil
+	})
+
+	return fileNames, err
 }

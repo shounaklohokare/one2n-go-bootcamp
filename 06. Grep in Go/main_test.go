@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"reflect"
@@ -68,6 +69,62 @@ func TestGrepSTDIN(t *testing.T) {
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("Want %v Got %v", want, err)
 	}
+}
+
+func TestGrepInDir(t *testing.T) {
+
+	var nilSlice []GrepResult
+	var testCases = []struct {
+		testname      string
+		searchStr     string
+		dirName       string
+		expected      []GrepResult
+		expectedError string
+	}{
+		{
+			testname:      "directory not found",
+			searchStr:     "search_string",
+			dirName:       "notFound",
+			expected:      nilSlice,
+			expectedError: "no such file or directory",
+		},
+		{
+			testname:      "an empty directory",
+			searchStr:     "search_string",
+			dirName:       fmt.Sprintf("testdata%cdir1", os.PathSeparator),
+			expected:      nilSlice,
+			expectedError: "",
+		},
+		{
+			testname:      "a directory containing one empty sub-dir",
+			searchStr:     "search_string",
+			dirName:       fmt.Sprintf("testdata%cdir2", os.PathSeparator),
+			expected:      nilSlice,
+			expectedError: "",
+		},
+	}
+
+	for _, test := range testCases {
+
+		t.Run(test.testname, func(t *testing.T) {
+			got, err := GrepInDir(test.dirName, test.searchStr)
+			if err != nil {
+				if test.expectedError != "" {
+					if !strings.Contains(err.Error(), test.expectedError) {
+						t.Errorf("Expected %v Got %v", test.expectedError, err)
+					}
+				} else {
+					t.Errorf("Expected %v Got %v", test.expectedError, err)
+				}
+			}
+
+			if !reflect.DeepEqual(got, test.expected) {
+				t.Errorf("Expected %v Got %v", test.expected, got)
+			}
+		})
+
+	}
+
 }
 
 func TestOutputFile(t *testing.T) {
